@@ -10,7 +10,7 @@ To install all the requirements for the project run
 
 In the root directory. After the modules have been installed you can run the project by using python
 
-	python facenet.py
+	python Dashboard.py
 
 ## NOTE
 
