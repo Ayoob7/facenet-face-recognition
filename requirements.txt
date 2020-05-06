@@ -1,0 +1,8 @@
+pypiwin32
+scikit-learn
+matplotlib
+opencv-contrib-python
+tensorflow==1.15.2
+keras
+scipy
+h5py
