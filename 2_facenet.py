@@ -15,7 +15,7 @@ import win32com.client as wincl
 PADDING = 50
 ready_to_detect_identity = True
 windows10_voice_interface = wincl.Dispatch("SAPI.SpVoice")
-
+font = cv2.FONT_HERSHEY_SIMPLEX
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
 
 def triplet_loss(y_true, y_pred, alpha = 0.3):
@@ -106,7 +106,7 @@ def process_frame(img, frame, face_cascade):
 
         img = cv2.rectangle(frame,(x1, y1),(x2, y2),(255,0,0),2)
 
-        identity = find_identity(frame, x1, y1, x2, y2)
+        identity = find_identity(img,frame, x1, y1, x2, y2)
 
         if identity is not None:
             identities.append(identity)
@@ -120,7 +120,7 @@ def process_frame(img, frame, face_cascade):
         pool.apply_async(welcome_users, [identities])
     return img
 
-def find_identity(frame, x1, y1, x2, y2):
+def find_identity(img,frame, x1, y1, x2, y2):
     """
     Determine whether the face contained within the bounding box exists in our database
 
@@ -134,9 +134,9 @@ def find_identity(frame, x1, y1, x2, y2):
     # The padding is necessary since the OpenCV face detector creates the bounding box around the face and not the head
     part_image = frame[max(0, y1):min(height, y2), max(0, x1):min(width, x2)]
     
-    return who_is_it(part_image, database, FRmodel)
+    return who_is_it(img,part_image, database, FRmodel,x1,y1)
 
-def who_is_it(image, database, model):
+def who_is_it(img,image, database, model,x1,y1):
     """
     Implements face recognition for the happy house by finding who is the person on the image_path image.
     
@@ -159,7 +159,7 @@ def who_is_it(image, database, model):
         
         # Compute L2 distance between the target "encoding" and the current "emb" from the database.
         dist = np.linalg.norm(db_enc - encoding)
-
+        cv2.putText(img, name, (x1 + 30, y1 - 10), font, 1, (120, 255, 120), 2, 1)
         print('distance for %s is %s' %(name, dist))
 
         # If this distance is less than the min_dist, then set min_dist to dist, and identity to name
