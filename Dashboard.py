@@ -39,7 +39,7 @@ exit_color = "#D88383"
 main_frame.title("Facial Recognition system from FaceNet")
 
 # Labels in the UI
-Label(main_frame, text="FACENET RECOGNITION SYSTEM", font=(font_type, font_size), fg=foreground_color, bg=top_background_color, height=2).grid(row=0,
+Label(main_frame, text="FACENET RECOGNITION SYSTEM\nResult of research by Ayoob, Guhanathan", font=(font_type, font_size), fg=foreground_color, bg=top_background_color, height=2).grid(row=0,
                                                                                                                column=0,
                                                                                                                sticky=news_sticky,
                                                                                                                padx=padding, pady=padding)

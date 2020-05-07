@@ -12,188 +12,152 @@ from dir_util.fr_utils import *
 from dir_util.inception_blocks_v2 import *
 import win32com.client as wincl
 
-PADDING = 50
-ready_to_detect_identity = True
-windows10_voice_interface = wincl.Dispatch("SAPI.SpVoice")
+normalize_image_borders = 50
+assert_detect_identity = True
+speak_welcome_message = wincl.Dispatch("SAPI.SpVoice")
 font = cv2.FONT_HERSHEY_SIMPLEX
-FRmodel = faceRecoModel(input_shape=(3, 96, 96))
+facial_recognition_model = faceRecoModel(input_shape=(3, 96, 96))
 
-def triplet_loss(y_true, y_pred, alpha = 0.3):
-    """
-    Implementation of the triplet loss as defined by formula (3)
+'''
+The loss function from the thesis implement here.
+FaceRecoModel was ported and optimised to run on average computing resources.
+'''
+def own_loss_function(y_true, y_pred, alpha = 0.3):
     
-    Arguments:
-    y_pred -- python list containing three objects:
-            anchor -- the encodings for the anchor images, of shape (None, 128)
-            positive -- the encodings for the positive images, of shape (None, 128)
-            negative -- the encodings for the negative images, of shape (None, 128)
+    differential, pos, neg = y_pred[0], y_pred[1], y_pred[2]
     
-    Returns:
-    loss -- real number, value of the loss
-    """
+    # Step 1: Reduce distance between the differential and positive
+    positive_distance = tf.reduce_sum(tf.square(tf.subtract(differential, pos)), axis=-1) # axis -1 IMPORTANT
+    # Step 2: Reduce distance between the differential and negative
+    negative_distance = tf.reduce_sum(tf.square(tf.subtract(differential, neg)), axis=-1) # axis -1 IMPORTANT
+    # Step 3: get the difference and add alpha
+    intermediate_pooling_loss = tf.add(tf.subtract(positive_distance, negative_distance), alpha)
+    # Step 4: Argmax of basic loss and 0
+    final_loss = tf.reduce_sum(tf.maximum(intermediate_pooling_loss, 0.0))
     
-    anchor, positive, negative = y_pred[0], y_pred[1], y_pred[2]
-    
-    # Step 1: Compute the (encoding) distance between the anchor and the positive, you will need to sum over axis=-1
-    pos_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, positive)), axis=-1)
-    # Step 2: Compute the (encoding) distance between the anchor and the negative, you will need to sum over axis=-1
-    neg_dist = tf.reduce_sum(tf.square(tf.subtract(anchor, negative)), axis=-1)
-    # Step 3: subtract the two previous distances and add alpha.
-    basic_loss = tf.add(tf.subtract(pos_dist, neg_dist), alpha)
-    # Step 4: Take the maximum of basic_loss and 0.0. Sum over the training examples.
-    loss = tf.reduce_sum(tf.maximum(basic_loss, 0.0))
-    
-    return loss
+    return final_loss
 
-FRmodel.compile(optimizer = 'adam', loss = triplet_loss, metrics = ['accuracy'])
-load_weights_from_FaceNet(FRmodel)
+facial_recognition_model.compile(optimizer ='adam', loss = own_loss_function, metrics = ['accuracy'])
 
-def prepare_database():
-    database = {}
+load_weights_from_FaceNet(facial_recognition_model)
 
-    # load all the images of individuals to recognize into the database
-    for file in glob.glob("images/*"):
-        identity = os.path.splitext(os.path.basename(file))[0]
-        database[identity] = img_path_to_encoding(file, FRmodel)
+def prepare_dictionary():
+    person_dictionary = {}
 
-    return database
+    # Load training data
+    for image in glob.glob("images/*"):
+        person_id = os.path.splitext(os.path.basename(image))[0]
+        person_dictionary[person_id] = img_path_to_encoding(image, facial_recognition_model)
 
-def webcam_face_recognizer(database):
-    """
-    Runs a loop that extracts images from the computer's webcam and determines whether or not
-    it contains the face of a person in our database.
+    return person_dictionary
 
-    If it contains a face, an audio message will be played welcoming the user.
-    If not, the program will process the next frame from the webcam
-    """
-    global ready_to_detect_identity
+def webcam_video_feed(database):
+    global assert_detect_identity
 
     cv2.namedWindow("preview")
-    vc = cv2.VideoCapture(0)
+    video_feed = cv2.VideoCapture(0)
 
-    face_cascade = cv2.CascadeClassifier('dir_util/haarcascade_frontalface_default.xml')
+    face_detectors = cv2.CascadeClassifier('dir_util/haarcascade_frontalface_default.xml')
     
-    while vc.isOpened():
-        _, frame = vc.read()
-        img = frame
+    while video_feed.isOpened():
+        _, video_frame = video_feed.read()
+        img = video_frame
 
-        # We do not want to detect a new identity while the program is in the process of identifying another person
-        if ready_to_detect_identity:
-            img = process_frame(img, frame, face_cascade)   
+        # Securely detect single faces.
+        if assert_detect_identity:
+            img = process_frame(img, video_frame, face_detectors)
         
         key = cv2.waitKey(100)
         cv2.imshow("preview", img)
 
-        if key == 27: # exit on ESC
+        if key == 27:
             break
     cv2.destroyWindow("preview")
 
 def process_frame(img, frame, face_cascade):
     """
-    Determine whether the current frame contains the faces of people from our database
+    Find whether people from the database is in the video frame.
     """
-    global ready_to_detect_identity
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3, 5)
+    global assert_detect_identity
+    remove_color_channel = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    faces_list = face_cascade.detectMultiScale(remove_color_channel, 1.3, 5)
 
-    # Loop through all the faces detected and determine whether or not they are in the database
+    # Loop faces
     identities = []
-    for (x, y, w, h) in faces:
-        x1 = x-PADDING
-        y1 = y-PADDING
-        x2 = x+w+PADDING
-        y2 = y+h+PADDING
+    for (x, y, w, h) in faces_list:
+        x_new = x - normalize_image_borders
+        y_new = y - normalize_image_borders
+        x2_new = x + w + normalize_image_borders
+        y2_new = y + h + normalize_image_borders
 
-        img = cv2.rectangle(frame,(x1, y1),(x2, y2),(255,0,0),2)
+        img = cv2.rectangle(frame,(x_new, y_new),(x2_new, y2_new),(255,0,0),2)
 
-        identity = find_identity(img,frame, x1, y1, x2, y2)
+        person_id = find_person_identity(img, frame, x_new, y_new, x2_new, y2_new)
 
-        if identity is not None:
-            identities.append(identity)
-            id_split = identity.split("_")
+        if person_id is not None:
+            identities.append(person_id)
+            id_split = person_id.split("_")
             print(id_split)
             #filename = output('attendance', 'class1', int(id_split[1]), id_split[0], 'yes')
 
     if identities != []:
         #cv2.imwrite('example.png',img)
-
-        ready_to_detect_identity = False
-        pool = Pool(processes=1) 
-        # We run this as a separate process so that the camera feedback does not freeze
-        pool.apply_async(welcome_users, [identities])
+        assert_detect_identity = False
+        thread_pool = Pool(processes=1)
+        # Thread pools are created to run some processes concurrently through asynchronous calls
+        thread_pool.apply_async(welcome_users, [identities])
     return img
 
-def find_identity(img,frame, x1, y1, x2, y2):
-    """
-    Determine whether the face contained within the bounding box exists in our database
+def find_person_identity(img, frame, x1_new, y1_new, x2_new, y2_new):
 
-    x1,y1_____________
-    |                 |
-    |                 |
-    |_________________x2,y2
+    h_max, w_max, color_channels = frame.shape
+    # Display the bounding box
+    part_video_frame = frame[max(0, y1_new):min(h_max, y2_new), max(0, x1_new):min(w_max, x2_new)]
+    
+    return who_is_the_person(img, part_video_frame, database, facial_recognition_model, x1_new, y1_new)
 
-    """
-    height, width, channels = frame.shape
-    # The padding is necessary since the OpenCV face detector creates the bounding box around the face and not the head
-    part_image = frame[max(0, y1):min(height, y2), max(0, x1):min(width, x2)]
+def who_is_the_person(frame, image, database, facenet, x1, y1):
+    encoding = img_to_encoding(image, facenet)
     
-    return who_is_it(img,part_image, database, FRmodel,x1,y1)
-
-def who_is_it(img,image, database, model,x1,y1):
-    """
-    Implements face recognition for the happy house by finding who is the person on the image_path image.
+    minimum_distance = 100
+    persons_id = None
     
-    Arguments:
-    image_path -- path to an image
-    database -- database containing image encodings along with the name of the person on the image
-    model -- your Inception model instance in Keras
-    
-    Returns:
-    min_dist -- the minimum distance between image_path encoding and the encodings from the database
-    identity -- string, the name prediction for the person on image_path
-    """
-    encoding = img_to_encoding(image, model)
-    
-    min_dist = 100
-    identity = None
-    
-    # Loop over the database dictionary's names and encodings.
-    for (name, db_enc) in database.items():
+    # for each name in database
+    for (name, database_encoding) in database.items():
         
-        # Compute L2 distance between the target "encoding" and the current "emb" from the database.
-        dist = np.linalg.norm(db_enc - encoding)
-        cv2.putText(img, name, (x1 + 30, y1 - 10), font, 1, (120, 255, 120), 2, 1)
-        print('distance for %s is %s' %(name, dist))
+        # calculate euclidean distance
+        encoding_distance = np.linalg.norm(database_encoding - encoding)
+        cv2.putText(frame, name, (x1 + 30, y1 - 10), font, 1, (120, 255, 120), 2, 1)
+        print('distance for %s is %s' %(name, encoding_distance))
 
         # If this distance is less than the min_dist, then set min_dist to dist, and identity to name
-        if dist < min_dist:
-            min_dist = dist
-            identity = name
+        if encoding_distance < minimum_distance:
+            minimum_distance = encoding_distance
+            persons_id = name
     
-    if min_dist > 0.52:
+    if minimum_distance > 0.49:
         return None
     else:
-        return str(identity)
+        return str(persons_id)
 
-def welcome_users(identities):
-    """ Outputs a welcome audio message to the users """
-    global ready_to_detect_identity
-    welcome_message = 'Welcome '
+def welcome_users(identity_matrix):
+    global assert_detect_identity
+    enter_message = 'Welcome '
 
-    if len(identities) == 1:
-        welcome_message += '%s, have a nice day.' % identities[0]
+    if len(identity_matrix) == 1:
+        enter_message += '%s, you may enter.' % identity_matrix[0]
     else:
-        for identity_id in range(len(identities)-1):
-            welcome_message += '%s, ' % identities[identity_id]
-        welcome_message += 'and %s, ' % identities[-1]
-        welcome_message += 'have a nice day!'
+        for identity_id in range(len(identity_matrix) - 1):
+            enter_message += '%s, ' % identity_matrix[identity_id]
+        enter_message += 'and %s, ' % identity_matrix[-1]
+        enter_message += 'you may enter'
 
-    windows10_voice_interface.Speak(welcome_message)
+    speak_welcome_message.Speak(enter_message)
 
-    # Allow the program to start detecting identities again
-    ready_to_detect_identity = True
+    # Rerun any unused threads
+    assert_detect_identity = True
 
 if __name__ == "__main__":
-    database = prepare_database()
-    webcam_face_recognizer(database)
+    database = prepare_dictionary()
+    webcam_video_feed(database)
 
