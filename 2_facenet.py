@@ -11,48 +11,12 @@ import tensorflow as tf
 from dir_util.fr_utils import *
 from dir_util.inception_blocks_v2 import *
 import win32com.client as wincl
-from datetime import datetime
-from pathlib import Path
-from xlrd import open_workbook
-from xlutils.copy import copy
-import xlwt
 
 PADDING = 50
 ready_to_detect_identity = True
 windows10_voice_interface = wincl.Dispatch("SAPI.SpVoice")
 font = cv2.FONT_HERSHEY_SIMPLEX
 FRmodel = faceRecoModel(input_shape=(3, 96, 96))
-
-def output(filename, sheet,num, name, present):
-    my_file = Path('reports/'+filename+str(datetime.now().date())+'.xls')
-    if my_file.is_file():
-        rb = open_workbook('reports/'+filename+str(datetime.now().date())+'.xls')
-        book = copy(rb)
-        sh = book.get_sheet(0)
-
-    else:
-        book = xlwt.Workbook()
-        sh = book.add_sheet(sheet)
-    style0 = xlwt.easyxf('font: name Times New Roman, color-index red, bold on',
-                         num_format_str='#,##0.00')
-    style1 = xlwt.easyxf(num_format_str='D-MMM-YY')
-
-    sh.write(0,0,datetime.now().date(),style1)
-
-    col0_name= 'Student_ID'
-    col1_name = 'Name'
-    col2_name = 'Present'
-
-    sh.write(2,0,col0_name,style0)
-    sh.write(2,1,col1_name,style0)
-    sh.write(2, 2, col2_name,style0)
-    sh.write(num+2,0,id)
-    sh.write(num+2,1,name)
-    sh.write(num+2, 2, present)
-
-    fullname=filename+str(datetime.now().date())+'.xls'
-    book.save('reports/'+fullname)
-    return fullname
 
 def triplet_loss(y_true, y_pred, alpha = 0.3):
     """
@@ -148,7 +112,7 @@ def process_frame(img, frame, face_cascade):
             identities.append(identity)
             id_split = identity.split("_")
             print(id_split)
-            filename = output('attendance', 'class1', int(id_split[1]), id_split[0], 'yes')
+            #filename = output('attendance', 'class1', int(id_split[1]), id_split[0], 'yes')
 
     if identities != []:
         #cv2.imwrite('example.png',img)
@@ -206,7 +170,7 @@ def who_is_it(img,image, database, model,x1,y1):
             min_dist = dist
             identity = name
     
-    if min_dist > 1.52:
+    if min_dist > 0.52:
         return None
     else:
         return str(identity)

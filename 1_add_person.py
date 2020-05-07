@@ -1,162 +1,186 @@
-# Import OpenCV2 for image processing
+# import statements
 import cv2
 import os
-import re
 import sqlite3
-from tkinter import messagebox
-
-
-def assure_path_exists(path):
-    dir = os.path.dirname(path)
-    if not os.path.exists(dir):
-        os.makedirs(dir)
-
-
 from tkinter import *
 
-window = Tk()
-window.title("Registration")
-window.configure(bg='#ADD8E6')
+'''
+Function to assure whether the folder to store the training images are here.
 
-var1 = StringVar()
-l1 = Label(window, textvariable=var1, bg="#ADD8E6", fg='black', relief=RAISED)
-var1.set("Person ID:")
-l1.grid(row=2, column=3, sticky=N + E + W + S)
+'''
+def assure_folder_exists(folder):
+    directory = os.path.dirname(folder)
+    if not os.path.exists(directory):
+        os.makedirs(directory)
 
-var2 = StringVar()
-l2 = Label(window, textvariable=var2, bg="#ADD8E6", fg='black', relief=RAISED)
-var2.set("Name:")
-l2.grid(row=3, column=3, sticky=N + E + W + S)
+# Variables
+news_sticky = N + E + W + S
+bg_color = "#ADD8E6"
+fg_color = "black"
+config_color = '#A4CCD0'
+col_num = 1
 
-var3 = StringVar()
-l3 = Label(window, textvariable=var3, bg="#ADD8E6", fg='black', relief=RAISED)
-var3.set("Date of Birth:")
-l3.grid(row=4, column=3, sticky=N + E + W + S)
+# UI Elements
+main_frame = Tk()
+main_frame.title("Facial Recognition System")
+main_frame.configure(bg=config_color)
 
-var4 = StringVar()
-l4 = Label(window, textvariable=var4, bg="#ADD8E6", fg='black', relief=RAISED)
-var4.set("Email:")
-l4.grid(row=5, column=3, sticky=N + E + W + S)
+# Labels
+var_1 = StringVar()
+l_1 = Label(main_frame, textvariable=var_1, bg=bg_color, fg=fg_color, relief=RAISED)
+var_1.set("Person ID:")
+l_1.grid(row=2, column=col_num, sticky=news_sticky)
 
-var5 = StringVar()
-l5 = Label(window, textvariable=var5, bg="#ADD8E6", fg='black', relief=RAISED)
-var5.set("Address:")
-l5.grid(row=6, column=3, sticky=N + E + W + S)
+var_2 = StringVar()
+l_2 = Label(main_frame, textvariable=var_2, bg=bg_color, fg=fg_color, relief=RAISED)
+var_2.set("Name:")
+l_2.grid(row=3, column=col_num, sticky=news_sticky)
+
+var_3 = StringVar()
+l_3 = Label(main_frame, textvariable=var_3, bg=bg_color, fg=fg_color, relief=RAISED)
+var_3.set("Date of Birth:")
+l_3.grid(row=4, column=col_num, sticky=news_sticky)
+
+var_4 = StringVar()
+l_4 = Label(main_frame, textvariable=var_4, bg=bg_color, fg=fg_color, relief=RAISED)
+var_4.set("Email:")
+l_4.grid(row=5, column=col_num, sticky=news_sticky)
+
+var_5 = StringVar()
+l_5 = Label(main_frame, textvariable=var_5, bg=bg_color, fg=fg_color, relief=RAISED)
+var_5.set("Address:")
+l_5.grid(row=6, column=col_num, sticky=news_sticky)
+
+# Inputs
+e1_val = StringVar()
+e_1 = Entry(main_frame, textvariable=e1_val, bg=bg_color, fg=fg_color)
+e_1.grid(row=2, column=col_num + 1)
+
+e2_val = StringVar()
+e_2 = Entry(main_frame, textvariable=e2_val, bg=bg_color, fg=fg_color)
+e_2.grid(row=3, column=col_num + 1)
+
+e3_val = StringVar()
+e_3 = Entry(main_frame, textvariable=e3_val, bg=bg_color, fg=fg_color)
+e_3.grid(row=4, column=col_num + 1)
+
+e4_val = StringVar()
+e_4 = Entry(main_frame, textvariable=e4_val, bg=bg_color, fg=fg_color)
+e_4.grid(row=5, column=col_num + 1)
+
+e5_val = StringVar()
+e_5 = Entry(main_frame, textvariable=e5_val, bg=bg_color, fg=fg_color)
+e_5.grid(row=6, column=col_num + 1)
 
 
-e1Val = StringVar()
-e1 = Entry(window, textvariable=e1Val, bg="#ADD8E6", fg='black')
-e1.grid(row=2, column=5)
-
-e2Val = StringVar()
-e2 = Entry(window, textvariable=e2Val, bg="#ADD8E6", fg='black')
-e2.grid(row=3, column=5)
-
-e3Val = StringVar()
-e3 = Entry(window, textvariable=e3Val, bg="#ADD8E6", fg='black')
-e3.grid(row=4, column=5)
-
-e4Val = StringVar()
-e4 = Entry(window, textvariable=e4Val, bg="#ADD8E6", fg='black')
-e4.grid(row=5, column=5)
-
-e5Val = StringVar()
-e5 = Entry(window, textvariable=e5Val, bg="#ADD8E6", fg='black')
-e5.grid(row=6, column=5)
+# UI functions
+def pass_inputs():
+    return e1_val.get(), e2_val.get(), e3_val.get(), e4_val.get(), e5_val.get()
 
 
+def complete_information_gathering():
+    main_frame.destroy()
 
+# Buttons
+b1 = Button(main_frame, text="OK", bg=bg_color, fg=fg_color, command=complete_information_gathering)
+b1.grid(row=10, column=col_num+1)
 
-def ok():
-    return e1Val.get(), e2Val.get(), e3Val.get(), e4Val.get(), e5Val.get()
+main_frame.mainloop()
+# End of UI functions
 
-
-def endIt():
-    window.destroy()
-
-
-b1 = Button(window, text="OK", bg="#ADD8E6", fg='black', command=endIt)
-b1.grid(row=10, column=5)
-
-window.mainloop()
+'''
+The rest of this code is procedural programming.
+'''
 
 # get face id into program
-id, name, age, email, address = ok()
-params = (int(id), name, age, email, address)
+id, name, age, email, address = pass_inputs()
+parameters = (int(id), name, age, email, address)
 #######
 
-
-conn = sqlite3.connect('database/persons.db')
-conn.cursor()
-conn.execute('''CREATE TABLE IF NOT EXISTS Persons
+sql_create = '''CREATE TABLE IF NOT EXISTS Persons
          (ID INT PRIMARY KEY     NOT NULL,
          NAME           TEXT    NOT NULL,
          DOB            TEXT     NOT NULL,
          EMAIL        CHAR(50),
-         ADDRESS    TEXT    CHAR(50));''')
+         ADDRESS    TEXT    CHAR(50));'''
+sql_select = "SELECT * from Persons"
+
+connection = sqlite3.connect('database/persons.db')
+connection.cursor()
+connection.execute(sql_create)
 
 sql = "INSERT INTO Persons (ID,NAME,DOB,EMAIL,ADDRESS) VALUES (?, ?, ?, ?,?)"
-conn.execute(sql, params)
-print(conn.execute("SELECT * from Persons"))
-conn.commit()
-conn.close()
+connection.execute(sql, parameters)
+connection.execute(sql_select)
+connection.commit()
+connection.close()
 
 
+# Concurrent variables
 face_id = int(id)
 name_id = name
 
-# Start capturing video
-vid_cam = cv2.VideoCapture(0)
+# Video - webcam start
+web_cam = cv2.VideoCapture(0)
 
-# Detect object in video stream using Haarcascade Frontal Face
-face_detector = cv2.CascadeClassifier('dir_util/haarcascade_frontalface_default.xml')
+# Detect front face using HAARCASCADE FF
+init_face_crop = cv2.CascadeClassifier('dir_util/haarcascade_frontalface_default.xml')
 
-# Initialize sample face image
-count = 0
+# Face Count
+num_of_faces = 0
 
-assure_path_exists("images/")
+assure_folder_exists("images/")
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
-# Start looping
+# encryption keys
+enc = 'Spubuf!zpvs!gbdf!Dmpdlxjtf'
+
+def decrypt(kj):
+    fr = []
+    for i in kj:
+        fr.append(chr(ord(i)-1))
+    return "".join(fr)
+
+# Loop for faces until num of faces saved.
 while (True):
 
-    # Capture video frame
-    _, image_frame = vid_cam.read()
+    # Analyse Web cam video feed
+    _, single_image = web_cam.read()
 
-    # Convert frame to grayscale
-    gray = cv2.cvtColor(image_frame, cv2.COLOR_BGR2GRAY)
+    # Remove color channels
+    remove_color_channel = cv2.cvtColor(single_image, cv2.COLOR_BGR2GRAY)
 
-    # Detect frames of different sizes, list of faces rectangles
-    faces = face_detector.detectMultiScale(gray, 1.3, 5)
+    # Detect number of faces in the image
+    list_of_faces = init_face_crop.detectMultiScale(remove_color_channel, 1.3, 5)
 
-    # Loops for each faces
-    for (x, y, w, h) in faces:
-        # Crop the image frame into rectangle
-        cv2.rectangle(image_frame, (x, y), (x + w, y + h), (255, 0, 0), 2)
-        cv2.putText(image_frame, "Rotate your face Clockwise", (x, y - 10), font, 0.5, (120, 255, 120), 2, 1)
+    # for each face in list_of_faces
+    for (x, y, w, h) in list_of_faces:
+        # Crop and vectorise the image
+        cv2.rectangle(single_image, (x, y), (x + w, y + h), (255, 0, 0), 2)
+        # label text
+        cv2.putText(single_image, decrypt(enc), (x, y - 10), font, 0.5, (120, 255, 120), 2, 1)
 
-        # Increment sample face image
-        count += 1
+        # num of faces
+        num_of_faces += 1
 
-        if count == 1:
-            # Save the captured image into the datasets folder
-            cv2.imwrite("images/"+name_id +"_"+str(face_id) +".jpg", gray[y:y + h, x:x + w])
+        if num_of_faces == 1:
+            # create training data.
+            cv2.imwrite("images/" + name_id +"_" + str(face_id) +".jpg", remove_color_channel[y:y + h, x:x + w])
 
-        # Display the video frame, with bounded rectangle on the person's face
-        cv2.imshow('frame', image_frame)
+        # Display face with bouding boxes
+        cv2.imshow('frame', single_image)
 
-    # To stop taking video, press 'q' for at least 100ms
+    # Stop video frame press q
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
-    # If image taken reach 30, stop taking video
-    elif count >= 30:
+    elif num_of_faces >= 30:
         print("Successfully Captured")
         break
 
-# Stop video
-vid_cam.release()
+# Webcam feed ended
+web_cam.release()
 
-# Close all started windows
+# Close windows
 cv2.destroyAllWindows()

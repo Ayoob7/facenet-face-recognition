@@ -4,11 +4,13 @@ import os
 
 connection_db = sqlite3.connect('database/persons.db')
 
-cursor = connection_db.cursor().execute("DELETE from Persons;")
-connection_db.commit()
+sql_query = "DELETE from Persons;"
 
-for row in cursor:
-   print(row[0])
+person_iterable = connection_db.cursor().execute(sql_query)
+connection_db.commit()
+start = 0
+for person in person_iterable:
+   print(person[start])
 
 connection_db.close()
 
