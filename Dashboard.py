@@ -22,6 +22,9 @@ def attend():
 def delete_persons():
     os.system("py 4_delete_users.py")
 
+def help_window():
+    os.system("py 5_help_window.py")
+
 def exit_program():
     main_frame.destroy()
 
@@ -69,7 +72,13 @@ Button(main_frame, text="Delete Person", font=(font_type, font_size), bg=view_bg
                                                                                                                              padx=padding,
                                                                                                                              pady=padding)
 
-Button(main_frame, text="Exit", font=(font_type, font_size), bg=exit_color, fg=top_background_color, command=exit_program).grid(row=5,
+Button(main_frame, text="Help", font=(font_type, font_size), bg=view_bg_color, fg=foreground_color, command=help_window).grid(row=5,
+                                                                                                                             column=0,
+                                                                                                                             sticky=news_sticky,
+                                                                                                                             padx=padding,
+                                                                                                                             pady=padding)
+
+Button(main_frame, text="Exit", font=(font_type, font_size), bg=exit_color, fg=top_background_color, command=exit_program).grid(row=6,
                                                                                                                   padx=padding, pady=padding)
 
 main_frame.mainloop()
