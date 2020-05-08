@@ -20,6 +20,5 @@ This has a extensible, user operable facial recognition application.However, the
 3. Facilitate FPGA model loading, for IOT applications. (Model Compression)
 4. Make an ubiquitous network message broker (Like RabbitMQ) for IOT applications 
 	
-## Attribution
- The boiler plate code was taken from Skuldur (https://github.com/Skuldur/facenet-face-recognition/).
+
  
