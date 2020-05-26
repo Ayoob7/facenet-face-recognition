@@ -22,6 +22,6 @@ This has a extensible, user operable facial recognition application.However, the
 2. Python libraries such as Numba and Cython. ()
 3. Facilitate FPGA model loading, for IOT applications. (Model Compression)
 4. Make an ubiquitous network message broker (Like RabbitMQ) for IOT applications 
-	
+5. Research multi-process based threading better to stabilize inter process model inferencing
 
  
