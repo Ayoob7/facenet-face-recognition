@@ -4,9 +4,10 @@ This application can be fully accessed from my GitHub repository (https://github
 
 This is the research product of the thesis ifold Learning of Latent Space Vectors in GAN for Image Synthesis. This has an application to the research, name a facial recognition system. The application was developed by consulting the FaceNet model (https://arxiv.org/pdf/1503.03832.pdf).
 
-## Research Artifact
-Please find the research artifact of ClusterGAN Manifold Learning Representations in the following link. 
-https://github.com/Ayoob7/facenet-face-recognition/blob/master/research_artifact/ClusterGAN.ipynb
+## Research Results
+Please find the research results of ClusterGAN Manifold Learning Representations in the following link. 
+[Results of the research](https://github.com/Ayoob7/facenet-face-recognition/blob/master/research_artifact/ClusterGAN.ipynb)
+
 
 ## How to use
 Clone the repository from GitHub
